@@ -17,3 +17,12 @@ Route::get('/', function () {
 
     return view('welcome');
 });
+
+
+Route::get('/chats', 'ChatsController@index');
+Route::get('/messages', 'ChatsController@fetchMessages');
+Route::post('/messages', 'ChatsController@sendMessage');
+
+Auth::routes();
+
+Route::get('/home', 'HomeController@index')->name('home');
