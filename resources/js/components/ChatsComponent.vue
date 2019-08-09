@@ -13,6 +13,8 @@
                     </ul>
                 </div>
                 <input
+                    @keyup.enter="sendMessage"
+                    v-model="newMessage"
                     type="text"
                     name="message"
                     placeholder="Enter Your message..."
@@ -21,15 +23,15 @@
                 <span class="text-muted">User is typing...</span>
             </div>
         </div>
-
-
         <div class="col-4">
             <div class="card card-default">
                 <div class="card-header">Active Users</div>
 
                 <div class="card-body">
                     <ul>
-                        <li class="py-2">Prabin</li>
+                        <li class="py-2" v-for="(user, index) in users" :key="index">
+                            {{ user.name }}
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -40,23 +42,56 @@
 
 <script>
     export default {
+
+        props:['user'],
+
         data(){
             return {
-                message: []
+                messages: [],
+                newMessage: '',
+                users:[]
             }
         },
 
         created() {
               this.fetchMessages();
 
-        },
+              Echo.join('chat')
+                  .here(user => {
+                      this.users = user;
+                      //console.log('here');
+                      //console.log(user);
+                  })
+                  .joining(user => {
+                      this.users.push(user);
+                      //console.log('joining');
+                      //console.log(user);
+                  })
+                  .leaving(user => {
+                      this.users = this.users.filter((u => u.id != user.id))
+                      //console.log('leaving');
+                      //console.log(user);
+                  })
+                  .listen('MessageSent', (event) => {
+                      this.messages.push(event.message);
+                  });
 
+        },
         methods:{
             fetchMessages(){
                 axios.get('messages').then(response => {
-                    this.message = response.data;
+                    this.messages = response.data;
                 })
-            }
+            },
+
+            sendMessage(){
+                this.messages.push({
+                    user:this.user,
+                   message: this.newMessage
+                });
+                axios.post('messages', {message: this.newMessage});
+                this.newMessage = '';
+            },
         }
     }
 </script>

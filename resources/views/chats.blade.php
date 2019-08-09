@@ -3,7 +3,7 @@
 @section('content')
     <div class="container">
 
-        <chats></chats>
+        <chats :user="{{ auth()->user() }}"></chats>
 
     </div>
 @endsection

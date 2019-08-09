@@ -1737,22 +1737,54 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
 /* harmony default export */ __webpack_exports__["default"] = ({
+  props: ['user'],
   data: function data() {
     return {
-      message: []
+      messages: [],
+      newMessage: '',
+      users: []
     };
   },
   created: function created() {
+    var _this = this;
+
     this.fetchMessages();
+    Echo.join('chat').here(function (user) {
+      _this.users = user; //console.log('here');
+      //console.log(user);
+    }).joining(function (user) {
+      _this.users.push(user); //console.log('joining');
+      //console.log(user);
+
+    }).leaving(function (user) {
+      _this.users = _this.users.filter(function (u) {
+        return u.id != user.id;
+      }); //console.log('leaving');
+      //console.log(user);
+    }).listen('MessageSent', function (event) {
+      _this.messages.push(event.message);
+    });
   },
   methods: {
     fetchMessages: function fetchMessages() {
-      var _this = this;
+      var _this2 = this;
 
       axios.get('messages').then(function (response) {
-        _this.message = response.data;
+        _this2.messages = response.data;
       });
+    },
+    sendMessage: function sendMessage() {
+      this.messages.push({
+        user: this.user,
+        message: this.newMessage
+      });
+      axios.post('messages', {
+        message: this.newMessage
+      });
+      this.newMessage = '';
     }
   }
 });
@@ -47330,11 +47362,37 @@ var render = function() {
         ]),
         _vm._v(" "),
         _c("input", {
+          directives: [
+            {
+              name: "model",
+              rawName: "v-model",
+              value: _vm.newMessage,
+              expression: "newMessage"
+            }
+          ],
           staticClass: "form-control",
           attrs: {
             type: "text",
             name: "message",
             placeholder: "Enter Your message..."
+          },
+          domProps: { value: _vm.newMessage },
+          on: {
+            keyup: function($event) {
+              if (
+                !$event.type.indexOf("key") &&
+                _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")
+              ) {
+                return null
+              }
+              return _vm.sendMessage($event)
+            },
+            input: function($event) {
+              if ($event.target.composing) {
+                return
+              }
+              _vm.newMessage = $event.target.value
+            }
           }
         }),
         _vm._v(" "),
@@ -47342,25 +47400,30 @@ var render = function() {
       ])
     ]),
     _vm._v(" "),
-    _vm._m(0)
-  ])
-}
-var staticRenderFns = [
-  function() {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "col-4" }, [
+    _c("div", { staticClass: "col-4" }, [
       _c("div", { staticClass: "card card-default" }, [
         _c("div", { staticClass: "card-header" }, [_vm._v("Active Users")]),
         _vm._v(" "),
         _c("div", { staticClass: "card-body" }, [
-          _c("ul", [_c("li", { staticClass: "py-2" }, [_vm._v("Prabin")])])
+          _c(
+            "ul",
+            _vm._l(_vm.users, function(user, index) {
+              return _c("li", { key: index, staticClass: "py-2" }, [
+                _vm._v(
+                  "\n                        " +
+                    _vm._s(user.name) +
+                    "\n                    "
+                )
+              ])
+            }),
+            0
+          )
         ])
       ])
     ])
-  }
-]
+  ])
+}
+var staticRenderFns = []
 render._withStripped = true
 
 
